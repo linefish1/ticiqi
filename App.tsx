@@ -3,11 +3,14 @@ import TeleprompterDisplay from './components/TeleprompterDisplay';
 import ControlPanel from './components/ControlPanel';
 import AIModal from './components/AIModal';
 import HelpModal from './components/HelpModal';
+import APISettingsModal from './components/APISettingsModal';
 import { PrompterSettings } from './types';
 
 const App: React.FC = () => {
   // --- State ---
-  const [text, setText] = useState<string>(`您好，欢迎使用 ZenPrompter，这是一款为您精心设计的个人提词器，旨在提供清晰、专注的体验。
+  const [text, setText] = useState<string>(() => {
+    const savedText = localStorage.getItem('zen_text');
+    return savedText !== null ? savedText : `您好，欢迎使用 ZenPrompter，这是一款为您精心设计的个人提词器，旨在提供清晰、专注的体验。
 
 现在，您正处于编辑模式。您可以点击本文本的任意位置开始输入、粘贴内容，或者直接从电脑拖拽一个脚本文件进来。
 
@@ -21,46 +24,49 @@ const App: React.FC = () => {
 
 如果您创作时遇到困难，我们的 AI 助手可以随时提供帮助。从一个简单的想法生成全新的脚本，或者润色您现有的文本，使其语法更通顺，语流更自然。
 
-就是这么简单！现在您已准备好自信地进行演示。去吧，用您自己的精彩脚本替换这段文字。`);
+就是这么简单！现在您已准备好自信地进行演示。去吧，用您自己的精彩脚本替换这段文字。`;
+  });
 
-  const [settings, setSettings] = useState<PrompterSettings>({
-    speed: 2,
-    fontSize: 60,
-    isMirrored: false,
-    isPlaying: false,
-    isEditing: true,
-    isVoiceMode: false,
-    fontFamily: 'sans',
-    textColor: 'white'
+  const [settings, setSettings] = useState<PrompterSettings>(() => {
+    const defaults: PrompterSettings = {
+      speed: 2,
+      fontSize: 60,
+      isMirrored: false,
+      isPlaying: false,
+      isEditing: true,
+      isVoiceMode: false,
+      fontFamily: 'sans',
+      textColor: 'white',
+      bgOpacity: 50,
+      textOpacity: 100
+    };
+    const savedSettings = localStorage.getItem('zen_settings');
+    if (savedSettings) {
+      try {
+        const parsed = JSON.parse(savedSettings);
+        return {
+          ...defaults,
+          ...parsed,
+          isPlaying: false,
+          isVoiceMode: false
+        };
+      } catch (e) {
+        console.error("Failed to load settings from localStorage:", e);
+      }
+    }
+    return defaults;
   });
 
   const [isAIModalOpen, setAIModalOpen] = useState(false);
   const [isHelpModalOpen, setHelpModalOpen] = useState(false);
+  const [isApiModalOpen, setApiModalOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
   // --- Persistence ---
   useEffect(() => {
-    const savedText = localStorage.getItem('zen_text');
-    const savedSettings = localStorage.getItem('zen_settings');
-    
-    if (savedText) setText(savedText);
-    if (savedSettings) {
-        try {
-            const parsed = JSON.parse(savedSettings);
-            // Merge with defaults to handle new fields in updates
-            setSettings(prev => ({
-                ...prev,
-                ...parsed,
-                isPlaying: false, 
-                isVoiceMode: false 
-            }));
-        } catch(e) { console.error("Failed to load settings"); }
-    }
-  }, []);
-
-  useEffect(() => {
+    // Save to localStorage when settings or text changes
     localStorage.setItem('zen_text', text);
-    // Don't save playing/voice states
+    // Don't save active status flags like isPlaying or isVoiceMode
     const { isPlaying, isVoiceMode, ...toSave } = settings;
     localStorage.setItem('zen_settings', JSON.stringify(toSave));
   }, [text, settings]);
@@ -116,32 +122,33 @@ const App: React.FC = () => {
             setText(content);
             handleReset();
         } else {
-            alert("Please drop a text file (.txt, .md)");
+            alert("请拖放普通的文本文件 (.txt、.md)！");
         }
     }
   };
 
   return (
     <div 
-        className="flex flex-col h-screen bg-black overflow-hidden font-sans relative"
+        className="flex flex-col h-screen overflow-hidden font-sans relative"
+        style={{ backgroundColor: `rgba(0, 0, 0, ${settings.bgOpacity / 100})` }}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
     >
       {/* Drag Overlay */}
       {isDragging && (
-          <div className="absolute inset-0 z-50 bg-emerald-900/80 backdrop-blur-sm flex items-center justify-center border-4 border-emerald-500 border-dashed m-4 rounded-xl">
-              <div className="text-center text-emerald-100 animate-bounce">
+          <div className="absolute inset-0 z-50 bg-amber-950/80 backdrop-blur-sm flex items-center justify-center border-4 border-amber-500 border-dashed m-4 rounded-xl">
+              <div className="text-center text-amber-100 animate-bounce">
                   <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-4"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
-                  <h2 className="text-3xl font-bold">Drop text file to load</h2>
+                  <h2 className="text-3xl font-bold">拖放文件以加载脚本</h2>
               </div>
           </div>
       )}
 
       {/* Header / Top Bar (Minimalist) */}
-      <div className="absolute top-0 left-0 p-4 z-40 opacity-50 hover:opacity-100 transition-opacity">
+      <div className="absolute top-0 left-0 p-4 z-40 opacity-55 hover:opacity-100 transition-opacity">
         <h1 className="text-white font-bold tracking-tighter text-xl pointer-events-none select-none">
-          Zen<span className="text-red-500">Prompter</span>
+          Zen<span className="text-amber-500">Prompter</span>
         </h1>
       </div>
 
@@ -161,6 +168,7 @@ const App: React.FC = () => {
         onReset={handleReset}
         openAIModal={() => setAIModalOpen(true)}
         openHelpModal={() => setHelpModalOpen(true)}
+        openApiModal={() => setApiModalOpen(true)}
         wordCount={text.split(/\s+/).filter(w => w.length > 0).length}
       />
 
@@ -176,6 +184,12 @@ const App: React.FC = () => {
       <HelpModal 
         isOpen={isHelpModalOpen}
         onClose={() => setHelpModalOpen(false)}
+      />
+
+      {/* API Settings Modal */}
+      <APISettingsModal
+        isOpen={isApiModalOpen}
+        onClose={() => setApiModalOpen(false)}
       />
     </div>
   );

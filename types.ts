@@ -7,6 +7,8 @@ export interface PrompterSettings {
   isVoiceMode: boolean;
   fontFamily: 'sans' | 'serif' | 'mono';
   textColor: 'white' | 'yellow' | 'green' | 'cyan';
+  bgOpacity: number;
+  textOpacity: number;
 }
 
 export interface ScriptSuggestion {

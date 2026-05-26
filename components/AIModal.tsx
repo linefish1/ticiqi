@@ -25,7 +25,7 @@ const AIModal: React.FC<AIModalProps> = ({ isOpen, onClose, onApply, currentText
       onApply(result);
       onClose();
     } catch (e) {
-      setError("Failed to generate script. Check your API Key or try again.");
+      setError("无法生成脚本。请检查您的 API 密钥配置，或稍后重试。");
     } finally {
       setIsLoading(false);
     }
@@ -33,7 +33,7 @@ const AIModal: React.FC<AIModalProps> = ({ isOpen, onClose, onApply, currentText
 
   const handlePolish = async () => {
     if (!currentText.trim()) {
-        setError("Your teleprompter is empty. Write something or generate a new script.");
+        setError("您的提词器文本为空！请先输入一些文字，或者生成一个新脚本。");
         return;
     }
     setIsLoading(true);
@@ -43,11 +43,18 @@ const AIModal: React.FC<AIModalProps> = ({ isOpen, onClose, onApply, currentText
       onApply(result);
       onClose();
     } catch (e) {
-      setError("Failed to polish script.");
+      setError("润色脚本失败。");
     } finally {
       setIsLoading(false);
     }
   };
+
+  const tones = [
+    { label: '专业学术', value: 'professional' },
+    { label: '日常随性', value: 'casual' },
+    { label: '趣味幽默', value: 'funny' },
+    { label: '激情促销', value: 'urgent' }
+  ];
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
@@ -60,9 +67,9 @@ const AIModal: React.FC<AIModalProps> = ({ isOpen, onClose, onApply, currentText
         </button>
 
         <h2 className="text-2xl font-bold text-white mb-1 flex items-center gap-2">
-            <span className="text-purple-500">✨</span> AI Assistant
+            <span className="text-amber-500">✨</span> AI 创作助手
         </h2>
-        <p className="text-gray-400 text-sm mb-6">Create a new script or improve your existing one using Gemini.</p>
+        <p className="text-gray-400 text-sm mb-6">通过 Gemini 生成全新的视频/演讲脚本，或者优化您当前的文案。</p>
 
         {error && (
             <div className="bg-red-900/50 border border-red-500 text-red-200 text-sm p-3 rounded-lg mb-4">
@@ -72,21 +79,21 @@ const AIModal: React.FC<AIModalProps> = ({ isOpen, onClose, onApply, currentText
 
         <div className="space-y-4">
             <div>
-                <label className="block text-xs font-semibold text-gray-400 uppercase mb-2">Generate New Script</label>
+                <label className="block text-xs font-semibold text-gray-400 uppercase mb-2">生成全新脚本</label>
                 <textarea
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
-                    placeholder="E.g. A 1-minute intro for a YouTube video about React Hooks..."
-                    className="w-full bg-black border border-gray-700 rounded-lg p-3 text-white placeholder-gray-600 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none h-32 resize-none"
+                    placeholder="例如：关于 React 19 新特性的 3 分钟技术分享大纲..."
+                    className="w-full bg-black border border-gray-700 rounded-lg p-3 text-white placeholder-gray-600 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none h-32 resize-none"
                 ></textarea>
                  <div className="flex gap-2 mt-2">
-                    {['Professional', 'Casual', 'Funny', 'Urgent'].map(t => (
+                    {tones.map(t => (
                         <button 
-                            key={t}
-                            onClick={() => setTone(t.toLowerCase())}
-                            className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${tone === t.toLowerCase() ? 'bg-purple-900 border-purple-500 text-white' : 'border-gray-700 text-gray-400 hover:border-gray-500'}`}
+                            key={t.value}
+                            onClick={() => setTone(t.value)}
+                            className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${tone === t.value ? 'bg-amber-950/60 border-amber-500/40 text-amber-300' : 'border-gray-700 text-gray-400 hover:border-gray-500'}`}
                         >
-                            {t}
+                            {t.label}
                         </button>
                     ))}
                 </div>
@@ -96,26 +103,26 @@ const AIModal: React.FC<AIModalProps> = ({ isOpen, onClose, onApply, currentText
                 <button
                     onClick={handleGenerate}
                     disabled={isLoading || !prompt.trim()}
-                    className={`flex-1 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all
-                        ${isLoading || !prompt.trim() ? 'bg-gray-800 text-gray-500 cursor-not-allowed' : 'bg-white text-black hover:bg-gray-200'}
+                    className={`flex-1 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-all
+                        ${isLoading || !prompt.trim() ? 'bg-gray-800 text-gray-500 cursor-not-allowed' : 'bg-amber-500 text-black hover:bg-amber-400'}
                     `}
                 >
-                    {isLoading ? 'Thinking...' : 'Generate Script'}
+                    {isLoading ? '正在构思脚本...' : '生成全新脚本'}
                 </button>
             </div>
 
             <div className="relative flex py-2 items-center">
                 <div className="flex-grow border-t border-gray-800"></div>
-                <span className="flex-shrink-0 mx-4 text-gray-600 text-xs uppercase">OR</span>
+                <span className="flex-shrink-0 mx-4 text-gray-600 text-xs uppercase">或者</span>
                 <div className="flex-grow border-t border-gray-800"></div>
             </div>
 
              <button
                 onClick={handlePolish}
                 disabled={isLoading}
-                className="w-full py-3 rounded-lg font-semibold border border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white transition-all flex items-center justify-center gap-2"
+                className="w-full py-3 rounded-lg font-semibold border border-gray-700 text-gray-350 text-gray-450 hover:border-amber-500/50 hover:text-amber-400 hover:bg-amber-950/20 transition-all flex items-center justify-center gap-2"
             >
-                {isLoading ? 'Polishing...' : 'Polish Current Script (Grammar & Flow)'}
+                {isLoading ? '正在润色文本...' : '润色当前提词器文字 (纠正语法与口语流畅度)'}
             </button>
         </div>
       </div>
